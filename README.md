@@ -2,6 +2,7 @@
 Cieľom projektu je analyzovať údaje z hudobnej databázy Chinook a získať hodnotné poznatky pre optimalizáciu obchodných rozhodnutí. Projekt sa zameriava na kľúčové oblasti vrátane predaja, zákazníckej analýzy, efektivity zamestnancov a trendov v používaní playlistov. Na základe tejto analýzy sa navrhnú odporúčania na zlepšenie tržieb, efektivity a zákazníckej spokojnosti.
 
 ## 1. Úvod a popis zdrojových dát
+
 ### 1.1 Úvod a popis zdrojových dát
 Tento projekt analyzuje databázu obsahujúcu informácie o skladbách, zákazníkoch, zamestnancoch, playlistoch a predajoch. 
 
@@ -27,4 +28,12 @@ Graf zobrazuje relačnú štruktúru hudobnej databázy, vrátane tabuliek a ich
 4. Employee: Zamestnanci a ich hierarchia.
 5. Genre, MediaType: Žánre a formáty skladieb.
 
-Zameriava sa na prepojenie predaja, obsahu a zákazníkov.
+<p align="center">
+  <img src="https://github.com/ZoltanPsenak/Chinook-ETL/blob/main/erd_schema.png" alt="ERD Schema">
+  <br>
+  <em>Obrázok 1 Entitno-relačná schéma Chinook</em>
+</p>
+
+---
+
+## 2. Návrh dimenzionálneho modelu
