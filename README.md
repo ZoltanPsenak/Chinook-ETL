@@ -40,7 +40,7 @@ Graf zobrazuje relačnú štruktúru hudobnej databázy, vrátane tabuliek a ich
 
 # Dimenzionálny model pre hudobnú databázu
 
-## Faktová tabuľka: `Fact_InvoiceLine`
+## Faktová tabuľka: Fact_InvoiceLine
 Faktová tabuľka predstavuje jadro dimenzionálneho modelu, obsahujúce údaje o predaji jednotlivých skladieb na faktúrach.
 
 ### Hlavné metriky:
@@ -104,3 +104,165 @@ Faktová tabuľka predstavuje jadro dimenzionálneho modelu, obsahujúce údaje 
   <br>
   <em>Obrázok 2 Schéma hviezdy pre ChinookDB</em>
 </p>
+
+# 3. ETL proces 
+ETL (Extract, Transform, Load) proces je kľúčový pre načítanie, transformáciu a nahrávanie dát do cieľovej databázy. V tomto prípade použijeme Snowflake na implementáciu ETL procesu.
+
+## Hlavné kroky ETL procesu
+
+1. **Extract (Extrahovanie)**
+   - Načítanie dát z rôznych zdrojov (napr. CSV súbory, databázy).
+2. **Transform (Transformácia)**
+   - Čistenie a transformácia dát do požadovaného formátu.
+3. **Load (Nahrávanie)**
+   - Nahrávanie transformovaných dát do cieľovej databázy (Snowflake).
+
+## Podrobný postup ETL procesu
+
+### 1. Extract (Extrahovanie)
+
+Načítanie dát z CSV súborov do Snowflake.
+
+```sql
+-- Vytvorenie stage pre načítanie CSV súborov
+CREATE OR REPLACE STAGE my_stage
+COPY INTO genre_staging
+FROM @my_stage/genre.csv
+FILE_FORMAT = (TYPE = 'CSV' FIELD_OPTIONALLY_ENCLOSED_BY = '"' SKIP_HEADER = 1);
+```
+
+### 2. Transform (Transformácia)
+Čistenie a transformácia dát.
+```sql
+-- Vytvorenie dočasnej tabuľky pre načítané dáta
+CREATE OR REPLACE TEMPORARY TABLE temp_table AS
+SELECT
+  $1 AS customer_id,
+  $2 AS first_name,
+  $3 AS last_name,
+  $4 AS email,
+  $5 AS phone,
+  $6 AS invoice_id,
+  $7 AS track_id,
+  $8 AS unit_price,
+  $9 AS quantity,
+  $10 AS invoice_date,
+  $11 AS employee_id,
+  $12 AS album_id,
+  $13 AS artist_id,
+  $14 AS genre_id,
+  $15 AS media_type_id,
+  $16 AS playlist_id
+FROM @my_stage (FILE_FORMAT => 'CSV');
+
+-- Vytvorenie dimenzionálnych tabuliek
+CREATE OR REPLACE TABLE dim_customer AS
+SELECT DISTINCT
+  customer_id,
+  first_name,
+  last_name,
+  email,
+  phone
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_track AS
+SELECT DISTINCT
+  track_id,
+  unit_price
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_employee AS
+SELECT DISTINCT
+  employee_id,
+  first_name,
+  last_name,
+  title,
+  birth_date,
+  hire_date,
+  address,
+  city,
+  state,
+  country,
+  postal_code,
+  phone,
+  fax,
+  email,
+  reports_to
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_album AS
+SELECT DISTINCT
+  album_id,
+  title,
+  artist_id
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_artist AS
+SELECT DISTINCT
+  artist_id,
+  name
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_genre AS
+SELECT DISTINCT
+  genre_id,
+  name
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_media_type AS
+SELECT DISTINCT
+  media_type_id,
+  name
+FROM temp_table;
+
+CREATE OR REPLACE TABLE dim_playlist AS
+SELECT DISTINCT
+  playlist_id,
+  name
+FROM temp_table;
+
+-- Vytvorenie faktovej tabuľky
+CREATE OR REPLACE TABLE fact_invoice_line AS
+SELECT
+  invoice_id,
+  track_id,
+  customer_id,
+  employee_id,
+  album_id,
+  artist_id,
+  genre_id,
+  media_type_id,
+  playlist_id,
+  unit_price,
+  quantity,
+  invoice_date
+FROM temp_table;
+```
+
+### 3. Load (Nahrávanie)
+Nahrávanie transformovaných dát do cieľovej tabuľky v Snowflake.
+```sql
+
+-- Odstránenie dočasnej tabuľky
+DROP TABLE temp_table;
+DROP TABLE dim_customer;
+DROP TABLE dim_track;
+DROP TABLE dim_employee;
+DROP TABLE dim_album;
+DROP TABLE dim_artist;
+DROP TABLE dim_genre;
+DROP TABLE dim_media_type;
+DROP TABLE dim_playlist;
+DROP TABLE fact_invoice_line;
+```
+### Hlavné SQL príkazy použité v každom kroku ETL procesu
+1. **Extract (Extrahovanie)**
+CREATE OR REPLACE STAGE: Vytvorenie stage pre načítanie CSV súborov.
+PUT: Načítanie CSV súborov do stage.
+2. **Transform (Transformácia)**
+CREATE OR REPLACE TEMPORARY TABLE: Vytvorenie dočasnej tabuľky pre načítané dáta.
+SELECT: Výber a transformácia dát z dočasnej tabuľky.
+3. **Load (Nahrávanie)**
+CREATE OR REPLACE TABLE: Vytvorenie cieľovej tabuľky.
+INSERT INTO: Nahrávanie dát do cieľovej tabuľky.
+Tento postup zabezpečuje, že dáta sú načítané, transformované a nahraté do cieľovej databázy v Snowflake efektívne a správne
