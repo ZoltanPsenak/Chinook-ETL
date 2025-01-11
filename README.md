@@ -505,3 +505,5 @@ ORDER BY HireYear;
 - **Účel**: Získať prehľad o priemernom čase zamestnania zamestnancov podľa roku prijatia.
 - **Výstup**: Tabuľka so stĺpcami pre rok prijatia a priemerný počet dní v zamestnaní.
 
+---
+Autor: Zoltán Pšenák
